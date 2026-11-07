@@ -5,5 +5,7 @@ data class Book(
     val isbn: String,
     val title: String,
     val author: String?,
-    val publishedYear: Int
+    val publishedYear: Int,
+    val isOnLoan: Boolean = false,
+    val loanedToMemberName: String? = null
 )

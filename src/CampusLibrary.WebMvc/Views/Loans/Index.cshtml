@@ -1,12 +1,15 @@
 @model IEnumerable<CampusLibrary.Data.Entities.Loan>
 
 @{
-    ViewData["Title"] = "Open Loans";
+    ViewData["Title"] = "Open loans";
 }
 
-<h1>Open Loans</h1>
+<div class="page-heading">
+    <div><p class="section-kicker mb-1">Circulation desk</p><h1>Open loans</h1></div>
+    <span class="text-muted">@Model.Count() currently out</span>
+</div>
 
-<table class="table">
+<div class="table-shell"><table class="table">
     <thead>
         <tr>
             <th>Book</th>
@@ -16,19 +19,30 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @if (!Model.Any())
         {
             <tr>
-                <td>@item.Book.Title (@item.Book.ISBN)</td>
-                <td>@item.Member.Name (@item.Member.Email)</td>
-                <td>@item.BorrowedAt.ToString("g")</td>
-                <td>
-                    <form asp-action="Return" method="post">
-                        <input type="hidden" name="id" value="@item.Id" />
-                        <button type="submit" class="btn btn-sm btn-primary">Return</button>
-                    </form>
+                <td colspan="4" class="text-center py-4">
+                    No open loans. Every title is back on the shelf.
                 </td>
             </tr>
         }
+        else
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Book.Title (@item.Book.ISBN)</td>
+                    <td>@item.Member.Name (@item.Member.Email)</td>
+                    <td>@item.BorrowedAt.ToString("g")</td>
+                    <td>
+                        <form asp-action="Return" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-sm btn-primary">Return</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
     </tbody>
-</table>
+</table></div>

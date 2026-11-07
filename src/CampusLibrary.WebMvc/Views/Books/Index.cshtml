@@ -1,38 +1,60 @@
 @model IEnumerable<CampusLibrary.Data.Entities.Book>
 
 @{
-    ViewData["Title"] = "Books";
+    ViewData["Title"] = "Collection";
 }
 
-<h1>Books</h1>
+<div class="page-heading">
+    <div><p class="section-kicker mb-1">The shelves</p><h1>Collection</h1></div>
+    <a asp-action="Create" class="btn btn-primary">Add a title <span aria-hidden="true">↗</span></a>
+</div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
-
-<table class="table">
+<div class="table-shell"><table class="table">
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(model => model.ISBN)</th>
             <th>@Html.DisplayNameFor(model => model.Title)</th>
             <th>@Html.DisplayNameFor(model => model.Author)</th>
             <th>@Html.DisplayNameFor(model => model.PublishedYear)</th>
+            <th>Status</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @if (!Model.Any())
         {
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                        No titles yet. <a asp-action="Create" class="link-primary">Add the first one</a>.
+                </td>
+            </tr>
+        }
+        else
+        {
+            foreach (var item in Model)
+            {
+                var openLoan = item.Loans.FirstOrDefault(l => l.ReturnedAt == null);
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.ISBN)</td>
                 <td>@Html.DisplayFor(modelItem => item.Title)</td>
                 <td>@Html.DisplayFor(modelItem => item.Author)</td>
                 <td>@Html.DisplayFor(modelItem => item.PublishedYear)</td>
                 <td>
+                    @if (openLoan != null)
+                    {
+                        <span class="badge bg-danger">On loan to @openLoan.Member.Name</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Available</span>
+                    }
+                </td>
+                <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">Edit</a> |
                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Delete</a>
                 </td>
             </tr>
+            }
         }
     </tbody>
-</table>
+</table></div>

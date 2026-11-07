@@ -1,8 +1,6 @@
-using CampusLibrary.Data;
-using CampusLibrary.Data.Entities;
 using CampusLibrary.WebApi.DTOs;
+using CampusLibrary.WebApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CampusLibrary.WebApi.Controllers;
 
@@ -10,82 +8,42 @@ namespace CampusLibrary.WebApi.Controllers;
 [Route("api/[controller]")]
 public class MembersController : ControllerBase
 {
-    private readonly LibraryDbContext _context;
+    private readonly IMemberService _memberService;
 
-    public MembersController(LibraryDbContext context)
+    public MembersController(IMemberService memberService)
     {
-        _context = context;
+        _memberService = memberService;
     }
 
-    // GET: api/members
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MemberDto>>> GetMembers()
+    public async Task<ActionResult<IEnumerable<MemberDto>>> GetMembers(CancellationToken cancellationToken)
     {
-        var members = await _context.Members
-            .Select(m => new MemberDto
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Email = m.Email,
-                JoinedDate = m.JoinedDate
-            })
-            .ToListAsync();
-
-        return Ok(members);
+        return Ok(await _memberService.GetAllAsync(cancellationToken));
     }
 
-    // GET: api/members/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<MemberDto>> GetMember(int id)
+    public async Task<ActionResult<MemberDto>> GetMember(int id, CancellationToken cancellationToken)
     {
-        var member = await _context.Members
-            .Where(m => m.Id == id)
-            .Select(m => new MemberDto
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Email = m.Email,
-                JoinedDate = m.JoinedDate
-            })
-            .FirstOrDefaultAsync();
-
-        if (member == null)
-        {
-            return NotFound(new { Message = $"Member with ID {id} not found" });
-        }
-
-        return Ok(member);
+        var member = await _memberService.GetByIdAsync(id, cancellationToken);
+        return member is null
+            ? NotFound(new { Message = $"Member with ID {id} not found" })
+            : Ok(member);
     }
 
-    // POST: api/members
     [HttpPost]
-    public async Task<ActionResult<MemberDto>> CreateMember(MemberDto dto)
+    public async Task<ActionResult<MemberDto>> CreateMember(MemberDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        // Check for duplicate email
-        var existingMember = await _context.Members
-            .FirstOrDefaultAsync(m => m.Email == dto.Email);
-
-        if (existingMember != null)
+        var result = await _memberService.CreateAsync(dto, cancellationToken);
+        if (result == MemberCreateResult.DuplicateEmail)
         {
             return Conflict(new { Message = $"A member with email {dto.Email} already exists" });
         }
 
-        var member = new Member
-        {
-            Name = dto.Name,
-            Email = dto.Email,
-            JoinedDate = dto.JoinedDate == default ? DateTime.UtcNow : dto.JoinedDate
-        };
-
-        _context.Members.Add(member);
-        await _context.SaveChangesAsync();
-
-        dto.Id = member.Id;
-        return CreatedAtAction(nameof(GetMember), new { id = member.Id }, dto);
+        return CreatedAtAction(nameof(GetMember), new { id = dto.Id }, dto);
     }
 }

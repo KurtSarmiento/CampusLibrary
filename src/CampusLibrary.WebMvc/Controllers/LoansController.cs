@@ -1,27 +1,22 @@
-using CampusLibrary.Data;
 using CampusLibrary.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using CampusLibrary.WebMvc.Services;
 
 namespace CampusLibrary.WebMvc.Controllers;
 
 public class LoansController : Controller
 {
-    private readonly LibraryDbContext _context;
+    private readonly ILoanService _loanService;
 
-    public LoansController(LibraryDbContext context)
+    public LoansController(ILoanService loanService)
     {
-        _context = context;
+        _loanService = loanService;
     }
 
     // GET: Loans
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var loans = await _context.Loans
-            .Include(l => l.Book)
-            .Include(l => l.Member)
-            .Where(l => l.ReturnedAt == null)
-            .ToListAsync();
+        var loans = await _loanService.GetOpenAsync(cancellationToken);
 
         return View(loans);
     }
@@ -29,22 +24,13 @@ public class LoansController : Controller
     // POST: Loans/Return/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Return(int id)
+    public async Task<IActionResult> Return(int id, CancellationToken cancellationToken)
     {
-        var loan = await _context.Loans.FindAsync(id);
-
-        if (loan == null)
+        var result = await _loanService.ReturnAsync(id, cancellationToken);
+        if (result == LoanReturnResult.NotFound)
         {
             return NotFound();
         }
-
-        if (loan.ReturnedAt != null)
-        {
-            return RedirectToAction(nameof(Index));
-        }
-
-        loan.ReturnedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(Index));
     }

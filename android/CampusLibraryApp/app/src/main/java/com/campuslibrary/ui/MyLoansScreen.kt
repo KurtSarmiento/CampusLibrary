@@ -38,14 +38,14 @@ fun MyLoansScreen(
             is LoanUiState.Empty -> EmptyScreen("No active loans")
             is LoanUiState.Error -> ErrorScreen(state.message) { viewModel.loadLoans() }
             is LoanUiState.Success -> {
-                LoansContent(loans = state.data)
+                LoansContent(loans = state.data, viewModel = viewModel)
             }
         }
     }
 }
 
 @Composable
-private fun LoansContent(loans: List<Loan>) {
+private fun LoansContent(loans: List<Loan>, viewModel: LoanViewModel) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(loans, key = { it.id }) { loan ->
             Card(
@@ -54,12 +54,23 @@ private fun LoansContent(loans: List<Loan>) {
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = loan.book.title, style = MaterialTheme.typography.titleMedium)
                         Text(text = "Member: ${loan.member.name}")
                         Text(text = "Borrowed: ${loan.borrowedAt}")
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.returnLoan(loan.id,
+                                onSuccess = { viewModel.loadLoans() },
+                                onError = { message -> /* could surface a snackbar; retry kept simple */ }
+                            )
+                        }
+                    ) {
+                        Text(text = "Return")
                     }
                 }
             }

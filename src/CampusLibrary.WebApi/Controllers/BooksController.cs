@@ -1,8 +1,6 @@
-using CampusLibrary.Data;
-using CampusLibrary.Data.Entities;
 using CampusLibrary.WebApi.DTOs;
+using CampusLibrary.WebApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CampusLibrary.WebApi.Controllers;
 
@@ -10,91 +8,47 @@ namespace CampusLibrary.WebApi.Controllers;
 [Route("api/[controller]")]
 public class BooksController : ControllerBase
 {
-    private readonly LibraryDbContext _context;
+    private readonly IBookService _bookService;
 
-    public BooksController(LibraryDbContext context)
+    public BooksController(IBookService bookService)
     {
-        _context = context;
+        _bookService = bookService;
     }
 
-    // GET: api/books
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks()
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(CancellationToken cancellationToken)
     {
-        var books = await _context.Books
-            .Select(b => new BookDto
-            {
-                Id = b.Id,
-                ISBN = b.ISBN,
-                Title = b.Title,
-                Author = b.Author,
-                PublishedYear = b.PublishedYear
-            })
-            .ToListAsync();
-
-        return Ok(books);
+        return Ok(await _bookService.GetAllAsync(cancellationToken));
     }
 
-    // GET: api/books/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<BookDto>> GetBook(int id)
+    public async Task<ActionResult<BookDto>> GetBook(int id, CancellationToken cancellationToken)
     {
-        var book = await _context.Books
-            .Where(b => b.Id == id)
-            .Select(b => new BookDto
-            {
-                Id = b.Id,
-                ISBN = b.ISBN,
-                Title = b.Title,
-                Author = b.Author,
-                PublishedYear = b.PublishedYear
-            })
-            .FirstOrDefaultAsync();
-
-        if (book == null)
-        {
-            return NotFound(new { Message = $"Book with ID {id} not found" });
-        }
-
-        return Ok(book);
+        var book = await _bookService.GetByIdAsync(id, cancellationToken);
+        return book is null
+            ? NotFound(new { Message = $"Book with ID {id} not found" })
+            : Ok(book);
     }
 
-    // POST: api/books
     [HttpPost]
-    public async Task<ActionResult<BookDto>> CreateBook(BookDto dto)
+    public async Task<ActionResult<BookDto>> CreateBook(BookDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        // Check for duplicate ISBN
-        var existingBook = await _context.Books
-            .FirstOrDefaultAsync(b => b.ISBN == dto.ISBN);
-
-        if (existingBook != null)
+        var result = await _bookService.CreateAsync(dto, cancellationToken);
+        if (result == BookCreateResult.DuplicateIsbn)
         {
             return Conflict(new { Message = $"A book with ISBN {dto.ISBN} already exists" });
         }
 
-        var book = new Book
-        {
-            ISBN = dto.ISBN,
-            Title = dto.Title,
-            Author = dto.Author,
-            PublishedYear = dto.PublishedYear
-        };
-
-        _context.Books.Add(book);
-        await _context.SaveChangesAsync();
-
-        dto.Id = book.Id;
-        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, dto);
+        return CreatedAtAction(nameof(GetBook), new { id = dto.Id }, dto);
     }
 
-    // PUT: api/books/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBook(int id, BookDto dto)
+    public async Task<IActionResult> UpdateBook(int id, BookDto dto, CancellationToken cancellationToken)
     {
         if (id != dto.Id)
         {
@@ -106,65 +60,22 @@ public class BooksController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var book = await _context.Books.FindAsync(id);
-
-        if (book == null)
+        var result = await _bookService.UpdateAsync(id, dto, cancellationToken);
+        return result switch
         {
-            return NotFound(new { Message = $"Book with ID {id} not found" });
-        }
-
-        // Check for duplicate ISBN (ignore current book)
-        var existingBook = await _context.Books
-            .FirstOrDefaultAsync(b => b.ISBN == dto.ISBN && b.Id != id);
-
-        if (existingBook != null)
-        {
-            return Conflict(new { Message = $"A book with ISBN {dto.ISBN} already exists" });
-        }
-
-        book.ISBN = dto.ISBN;
-        book.Title = dto.Title;
-        book.Author = dto.Author;
-        book.PublishedYear = dto.PublishedYear;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!BookExists(id))
-            {
-                return NotFound(new { Message = $"Book with ID {id} not found" });
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
+            BookUpdateResult.NotFound => NotFound(new { Message = $"Book with ID {id} not found" }),
+            BookUpdateResult.DuplicateIsbn => Conflict(new { Message = $"A book with ISBN {dto.ISBN} already exists" }),
+            BookUpdateResult.ConcurrencyConflict => Conflict(new { Message = "The book was modified by another request" }),
+            _ => NoContent()
+        };
     }
 
-    // DELETE: api/books/5
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteBook(int id)
+    public async Task<IActionResult> DeleteBook(int id, CancellationToken cancellationToken)
     {
-        var book = await _context.Books.FindAsync(id);
-
-        if (book == null)
-        {
-            return NotFound(new { Message = $"Book with ID {id} not found" });
-        }
-
-        _context.Books.Remove(book);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    private bool BookExists(int id)
-    {
-        return _context.Books.Any(e => e.Id == id);
+        var result = await _bookService.DeleteAsync(id, cancellationToken);
+        return result == BookDeleteResult.NotFound
+            ? NotFound(new { Message = $"Book with ID {id} not found" })
+            : NoContent();
     }
 }

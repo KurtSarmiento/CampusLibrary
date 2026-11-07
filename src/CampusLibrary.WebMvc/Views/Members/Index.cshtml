@@ -4,13 +4,12 @@
     ViewData["Title"] = "Members";
 }
 
-<h1>Members</h1>
+<div class="page-heading">
+    <div><p class="section-kicker mb-1">Our community</p><h1>Members</h1></div>
+    <a asp-action="Create" class="btn btn-primary">Register a member <span aria-hidden="true">↗</span></a>
+</div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
-
-<table class="table">
+<div class="table-shell"><table class="table">
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(model => model.Name)</th>
@@ -19,13 +18,24 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @if (!Model.Any())
         {
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Name)</td>
-                <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.DisplayFor(modelItem => item.JoinedDate)</td>
+                <td colspan="3" class="text-center py-4">
+                        No members yet. <a asp-action="Create" class="link-primary">Register the first one</a>.
+                </td>
             </tr>
         }
+        else
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                    <td>@Html.DisplayFor(modelItem => item.JoinedDate)</td>
+                </tr>
+            }
+        }
     </tbody>
-</table>
+</table></div>

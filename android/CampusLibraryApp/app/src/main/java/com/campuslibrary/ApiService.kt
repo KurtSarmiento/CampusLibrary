@@ -18,4 +18,10 @@ interface ApiService {
 
     @GET("loans")
     suspend fun getLoans(): Response<List<Loan>>
+
+    @GET("members")
+    suspend fun getMembers(): Response<List<Member>>
+
+    @POST("loans/{id}/return")
+    suspend fun returnLoan(@Path("id") id: Int): Response<Unit>
 }

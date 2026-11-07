@@ -74,6 +74,19 @@ private fun BookListContent(
                         Text(text = book.title, style = MaterialTheme.typography.titleMedium)
                         Text(text = "${book.author ?: "Unknown author"} · ${book.isbn}")
                         Text(text = "Year: ${book.publishedYear}", style = MaterialTheme.typography.labelSmall)
+                        if (book.isOnLoan) {
+                            Text(
+                                text = "On loan to ${book.loanedToMemberName ?: "a member"}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        } else {
+                            Text(
+                                text = "Available",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                     TextButton(
                         onClick = { onBookClick(book.id) },

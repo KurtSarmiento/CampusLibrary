@@ -1,23 +1,22 @@
-using CampusLibrary.Data;
 using CampusLibrary.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using CampusLibrary.WebMvc.Services;
 
 namespace CampusLibrary.WebMvc.Controllers;
 
 public class BooksController : Controller
 {
-    private readonly LibraryDbContext _context;
+    private readonly IBookService _bookService;
 
-    public BooksController(LibraryDbContext context)
+    public BooksController(IBookService bookService)
     {
-        _context = context;
+        _bookService = bookService;
     }
 
     // GET: Books
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var books = await _context.Books.ToListAsync();
+        var books = await _bookService.GetAllAsync(cancellationToken);
         return View(books);
     }
 
@@ -30,36 +29,30 @@ public class BooksController : Controller
     // POST: Books/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Book book)
+    public async Task<IActionResult> Create(Book book, CancellationToken cancellationToken)
     {
         if (ModelState.IsValid)
         {
-            // Check for duplicate ISBN
-            var existingBook = await _context.Books
-                .FirstOrDefaultAsync(b => b.ISBN == book.ISBN);
-
-            if (existingBook != null)
+            if (!await _bookService.CreateAsync(book, cancellationToken))
             {
                 ModelState.AddModelError("ISBN", "A book with this ISBN already exists");
                 return View(book);
             }
 
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
         return View(book);
     }
 
     // GET: Books/Edit/5
-    public async Task<IActionResult> Edit(int? id)
+    public async Task<IActionResult> Edit(int? id, CancellationToken cancellationToken)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var book = await _context.Books.FindAsync(id);
+        var book = await _bookService.GetByIdAsync(id.Value, cancellationToken);
         if (book == null)
         {
             return NotFound();
@@ -70,7 +63,7 @@ public class BooksController : Controller
     // POST: Books/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Book book)
+    public async Task<IActionResult> Edit(int id, Book book, CancellationToken cancellationToken)
     {
         if (id != book.Id)
         {
@@ -79,47 +72,33 @@ public class BooksController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            var result = await _bookService.UpdateAsync(book, cancellationToken);
+            switch (result)
             {
-                // Check for duplicate ISBN (ignore current book)
-                var existingBook = await _context.Books
-                    .FirstOrDefaultAsync(b => b.ISBN == book.ISBN && b.Id != id);
-
-                if (existingBook != null)
-                {
+                case BookUpdateResult.NotFound:
+                    return NotFound();
+                case BookUpdateResult.DuplicateIsbn:
                     ModelState.AddModelError("ISBN", "A book with this ISBN already exists");
                     return View(book);
-                }
+                case BookUpdateResult.ConcurrencyConflict:
+                    ModelState.AddModelError(string.Empty, "This title was changed by another user. Reload and try again.");
+                    return View(book);
+            }
 
-                _context.Update(book);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookExists(book.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
             return RedirectToAction(nameof(Index));
         }
         return View(book);
     }
 
     // GET: Books/Delete/5
-    public async Task<IActionResult> Delete(int? id)
+    public async Task<IActionResult> Delete(int? id, CancellationToken cancellationToken)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var book = await _context.Books
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var book = await _bookService.GetByIdAsync(id.Value, cancellationToken);
         if (book == null)
         {
             return NotFound();
@@ -131,29 +110,14 @@ public class BooksController : Controller
     // POST: Books/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
     {
-        var book = await _context.Books.FindAsync(id);
-        if (book == null)
+        var result = await _bookService.DeleteAsync(id, cancellationToken);
+        if (result == BookDeleteResult.NotFound)
         {
             return NotFound();
         }
 
-        // A book on loan cannot be deleted; cascade would destroy the open loan.
-        var hasOpenLoan = await _context.Loans
-            .AnyAsync(l => l.BookId == id && l.ReturnedAt == null);
-        if (hasOpenLoan)
-        {
-            return RedirectToAction(nameof(Index));
-        }
-
-        _context.Books.Remove(book);
-        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
-    }
-
-    private bool BookExists(int id)
-    {
-        return _context.Books.Any(e => e.Id == id);
     }
 }

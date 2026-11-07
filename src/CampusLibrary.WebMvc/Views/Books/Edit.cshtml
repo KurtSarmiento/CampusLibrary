@@ -1,34 +1,33 @@
 @model CampusLibrary.Data.Entities.Book
 
 @{
-    ViewData["Title"] = "Edit Book";
+    ViewData["Title"] = "Edit title";
 }
 
-<h1>Edit Book</h1>
-
-<hr />
+<div class="page-heading"><div><p class="section-kicker mb-1">The shelves</p><h1>Edit title</h1></div></div>
 
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="ISBN" class="control-label"></label>
                 <input asp-for="ISBN" class="form-control" />
                 <span asp-validation-for="ISBN" class="text-danger"></span>
+                <span class="form-text text-muted">Changing the ISBN to one already in use will be rejected.</span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Author" class="control-label"></label>
                 <input asp-for="Author" class="form-control" />
                 <span asp-validation-for="Author" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-4">
                 <label asp-for="PublishedYear" class="control-label"></label>
                 <input asp-for="PublishedYear" class="form-control" />
                 <span asp-validation-for="PublishedYear" class="text-danger"></span>
@@ -41,7 +40,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">← Back to collection</a>
 </div>
 
 @section Scripts {

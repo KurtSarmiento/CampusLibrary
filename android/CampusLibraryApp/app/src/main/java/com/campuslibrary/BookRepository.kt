@@ -62,6 +62,33 @@ class BookRepository(private val apiService: ApiService) {
         }
     }
 
+    suspend fun getMembers(): Result<List<Member>> {
+        return try {
+            val response = apiService.getMembers()
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                Result.success(body)
+            } else {
+                Result.failure(Exception("Failed to load members: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun returnLoan(loanId: Int): Result<Unit> {
+        return try {
+            val response = apiService.returnLoan(loanId)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Return failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun booksFlow(): Flow<Result<List<Book>>> = flow {
         emit(getBooks())
     }

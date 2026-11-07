@@ -1,23 +1,22 @@
-using CampusLibrary.Data;
 using CampusLibrary.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using CampusLibrary.WebMvc.Services;
 
 namespace CampusLibrary.WebMvc.Controllers;
 
 public class MembersController : Controller
 {
-    private readonly LibraryDbContext _context;
+    private readonly IMemberService _memberService;
 
-    public MembersController(LibraryDbContext context)
+    public MembersController(IMemberService memberService)
     {
-        _context = context;
+        _memberService = memberService;
     }
 
     // GET: Members
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var members = await _context.Members.ToListAsync();
+        var members = await _memberService.GetAllAsync(cancellationToken);
         return View(members);
     }
 
@@ -30,28 +29,16 @@ public class MembersController : Controller
     // POST: Members/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Member member)
+    public async Task<IActionResult> Create(Member member, CancellationToken cancellationToken)
     {
         if (ModelState.IsValid)
         {
-            // Check for duplicate email
-            var existingMember = await _context.Members
-                .FirstOrDefaultAsync(m => m.Email == member.Email);
-
-            if (existingMember != null)
+            if (!await _memberService.CreateAsync(member, cancellationToken))
             {
                 ModelState.AddModelError("Email", "A member with this email already exists");
                 return View(member);
             }
 
-            // Set JoinedDate if not provided
-            if (member.JoinedDate == default)
-            {
-                member.JoinedDate = DateTime.UtcNow;
-            }
-
-            _context.Members.Add(member);
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
         return View(member);

@@ -2,3 +2,4 @@
 - 2026-11-07 18:06 — Android book list + detail — [folder](./2026-11-07-1806-android-book-list-detail/)
 - 2026-11-07 18:42 — Android borrow + my loans — [folder](./2026-11-07-1842-android-borrow-my-loans/)
 - 2026-11-07 19:00 — Milestone 8 review fixes — [folder](./2026-11-07-1900-milestone-8-review-fixes/)
+- 2026-11-07 22:11 — Impeccable UI fixes (web + Android, everything scope) — [folder](./2026-11-07-2211-impeccable-ui-fixes/)

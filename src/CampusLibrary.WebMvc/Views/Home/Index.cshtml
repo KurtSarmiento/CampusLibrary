@@ -1,8 +1,52 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Overview";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="home-hero">
+    <div class="home-hero__copy">
+        <p class="section-kicker">The campus collection</p>
+        <h1>A good place to start your next chapter.</h1>
+        <p class="lead">Keep the campus reading room moving. Find a title, welcome a member, or make sure every borrowed book finds its way home.</p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Browse the collection <span aria-hidden="true">→</span></a>
+            <a class="btn btn-outline-primary" asp-controller="Members" asp-action="Create">Register a member</a>
+        </div>
+    </div>
+    <div class="home-hero__note">
+        <span class="home-hero__number">01</span>
+        <p>“A library is not a luxury but one of the necessities of life.”</p>
+        <small>— Henry Ward Beecher</small>
+    </div>
+</section>
+
+<section class="home-section" aria-labelledby="start-heading">
+    <div class="section-intro">
+        <p class="section-kicker">Start here</p>
+        <h2 id="start-heading">The desk, at a glance.</h2>
+    </div>
+    <div class="home-cards">
+        <a class="home-card" asp-controller="Books" asp-action="Index">
+            <span class="home-card__label">01 / Collection</span>
+            <h3>Browse titles</h3>
+            <p>Review the catalogue, check availability, and keep the shelves current.</p>
+            <span class="home-card__arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="home-card" asp-controller="Members" asp-action="Index">
+            <span class="home-card__label">02 / Community</span>
+            <h3>See members</h3>
+            <p>Keep student and faculty records ready for the next checkout.</p>
+            <span class="home-card__arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="home-card home-card--dark" asp-controller="Loans" asp-action="Index">
+            <span class="home-card__label">03 / Circulation</span>
+            <h3>Open loans</h3>
+            <p>See what is out, who has it, and what is ready to return.</p>
+            <span class="home-card__arrow" aria-hidden="true">↗</span>
+        </a>
+    </div>
+</section>
+
+<section class="home-ribbon">
+    <div><strong>Quiet spaces.</strong> Generous ideas.</div>
+    <span>Built for the everyday work of campus.</span>
+</section>
