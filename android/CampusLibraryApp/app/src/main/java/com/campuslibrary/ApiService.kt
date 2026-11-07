@@ -7,14 +7,19 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface ApiService {
+
     @GET("books")
     suspend fun getBooks(): Response<List<Book>>
 
     @GET("books/{id}")
-    suspend fun getBook(@Path("id") id: Int): Response<Book>
+    suspend fun getBook(
+        @Path("id") id: Int
+    ): Response<Book>
 
     @POST("loans")
-    suspend fun borrowBook(@Body request: BorrowRequest): Response<Loan>
+    suspend fun borrowBook(
+        @Body request: BorrowRequest
+    ): Response<Loan>
 
     @GET("loans")
     suspend fun getLoans(): Response<List<Loan>>
@@ -23,5 +28,7 @@ interface ApiService {
     suspend fun getMembers(): Response<List<Member>>
 
     @POST("loans/{id}/return")
-    suspend fun returnLoan(@Path("id") id: Int): Response<Unit>
+    suspend fun returnLoan(
+        @Path("id") id: Int
+    ): Response<Unit>
 }

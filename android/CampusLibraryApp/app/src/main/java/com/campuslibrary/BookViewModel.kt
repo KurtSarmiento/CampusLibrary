@@ -21,6 +21,9 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
     private val _selected = MutableStateFlow<BookUiState<Book>>(BookUiState.Loading)
     val selected: StateFlow<BookUiState<Book>> = _selected.asStateFlow()
 
+    private val _isBorrowing = MutableStateFlow(false)
+    val isBorrowing: StateFlow<Boolean> = _isBorrowing.asStateFlow()
+
     init {
         loadBooks()
     }
@@ -52,10 +55,18 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
     }
 
     fun borrowBook(bookId: Int, memberId: Int, onSuccess: (Loan) -> Unit, onError: (String) -> Unit) {
+        if (_isBorrowing.value) return
         viewModelScope.launch {
+            _isBorrowing.value = true
             val result = repository.borrowBook(bookId, memberId)
+            _isBorrowing.value = false
             if (result.isSuccess) {
-                result.getOrNull()?.let { onSuccess(it) }
+                val loan = result.getOrNull()
+                if (loan != null) {
+                    loadBooks()
+                    loadBook(bookId)
+                    onSuccess(loan)
+                }
             } else {
                 onError(result.exceptionOrNull()?.message ?: "Borrow failed")
             }

@@ -56,6 +56,7 @@ class LoanViewModel(private val repository: BookRepository) : ViewModel() {
         viewModelScope.launch {
             val result = repository.returnLoan(loanId)
             if (result.isSuccess) {
+                loadLoans()
                 onSuccess()
             } else {
                 onError(result.exceptionOrNull()?.message ?: "Return failed")
