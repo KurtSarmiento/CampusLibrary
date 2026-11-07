@@ -1,0 +1,4 @@
+- 2026-11-07 07:51 — Web MVC admin pages — [folder](./2026-11-07-0751-web-mvc-admin-pages/)
+- 2026-11-07 18:06 — Android book list + detail — [folder](./2026-11-07-1806-android-book-list-detail/)
+- 2026-11-07 18:42 — Android borrow + my loans — [folder](./2026-11-07-1842-android-borrow-my-loans/)
+- 2026-11-07 19:00 — Milestone 8 review fixes — [folder](./2026-11-07-1900-milestone-8-review-fixes/)
